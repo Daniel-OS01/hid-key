@@ -10,8 +10,6 @@ The easiest way to use this tool is with the graphical user interface.
 
 ### Python GUI (`send_hebrew_gui.py`)
 
-![Python GUI Screenshot](https://i.imgur.com/your-screenshot.png) <!-- It's helpful to add a screenshot -->
-
 **Requirements:**
 - Python 3
 - `pyserial` library: `pip install pyserial`
@@ -23,8 +21,6 @@ python send_hebrew_gui.py
 ```
 
 ### PowerShell GUI (`send_hebrew_gui.ps1`)
-
-![PowerShell GUI Screenshot](https://i.imgur.com/your-screenshot.png) <!-- It's helpful to add a screenshot -->
 
 **Requirements:**
 - PowerShell 5.1 or later (standard on Windows 10 and 11)
