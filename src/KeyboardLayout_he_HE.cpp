@@ -36,42 +36,42 @@ extern const uint8_t KeyboardLayout_he_HE[128] PROGMEM = {
   0x2c,
 
   // 0x21 - 0x2F: !"#$%&'()*+,-./
-  0x1e|SHIFT,    // ! (Shift+1)
-  0x34|SHIFT,    // " (on US ' key, shifted)
-  0x20|SHIFT,    // # (Shift+3)
-  0x21|SHIFT,    // $ (Shift+4)
-  0x22|SHIFT,    // % (Shift+5)
-  0x23|SHIFT,    // & (Shift+6)
-  0x33,          // ' (on US ; key)
-  0x27|SHIFT,    // ( (Shift+0)
-  0x26|SHIFT,    // ) (Shift+9)
-  0x25|SHIFT,    // * (Shift+8)
-  0x2e|SHIFT,    // + (on US = key, shifted)
-  0x34,          // , (on US ' key)
-  0x2d,          // - (on US - key)
-  0x38,          // . (on US / key)
-  0x37,          // / (on US . key)
+  0x1e|SHIFT, // ! Shift-1
+  0x1f|SHIFT, // " Shift-2
+  0x20|ALT_GR, // # AltGr-3 (Hebrew keyboard position)
+  0x21|SHIFT, // $ Shift-4
+  0x22|SHIFT, // % Shift-5
+  0x23|SHIFT, // & Shift-6
+  0x2d,       // ' Apostrophe (Hebrew keyboard specific)
+  0x25|SHIFT, // ( Shift-8
+  0x26|SHIFT, // ) Shift-9
+  0x30|SHIFT, // * Shift-0
+  0x30,       // + Plus
+  0x36,       // , Comma
+  0x38,       // - Minus/Dash
+  0x37,       // . Period/Full stop
+  0x24|SHIFT, // / Forward slash (Shift-7 on Hebrew keyboard)
 
   // 0x30 - 0x39: 0-9 (Numbers)
-  0x27,          // 0
-  0x1e,          // 1
-  0x1f,          // 2
-  0x20,          // 3
-  0x21,          // 4
-  0x22,          // 5
-  0x23,          // 6
-  0x24,          // 7
-  0x25,          // 8
-  0x26,          // 9
+  0x27,       // 0
+  0x1e,       // 1
+  0x1f,       // 2
+  0x20,       // 3
+  0x21,       // 4
+  0x22,       // 5
+  0x23,       // 6
+  0x24,       // 7
+  0x25,       // 8
+  0x26,       // 9
 
   // 0x3A - 0x40: :;<=>?@
-  0x33|SHIFT,    // : (on US ; key, shifted)
-  0x1d|SHIFT,    // ; (on US z key, shifted)
-  0x36|SHIFT,    // < (on US , key, shifted)
-  0x2e,          // = (on US = key)
-  0x37|SHIFT,    // > (on US . key, shifted)
-  0x38|SHIFT,    // ? (on US / key, shifted)
-  0x1f|SHIFT,    // @ (on US 2 key, shifted)
+  0x37|SHIFT, // : Colon (Shift-. on Hebrew keyboard)
+  0x36|SHIFT, // ; Semicolon (Shift-, on Hebrew keyboard)
+  0x32,       // < Less than
+  0x27|SHIFT, // = Equals
+  0x32|SHIFT, // > Greater than
+  0x2d|SHIFT, // ? Question mark (Shift-' on Hebrew keyboard)
+  0x1f|ALT_GR, // @ At sign (AltGr-2)
 
   // 0x41 - 0x5A: A-Z (Latin uppercase letters)
   0x04|SHIFT, // A
@@ -102,14 +102,18 @@ extern const uint8_t KeyboardLayout_he_HE[128] PROGMEM = {
   0x1d|SHIFT, // Z
 
   // 0x5B - 0x60: [\]^_`
-  0x2f,          // [ (on US [ key)
-  0x31,          // \ (on US \ key)
-  0x30,          // ] (on US ] key)
-  0x23|SHIFT,    // ^ (on US 6 key, shifted)
-  0x2d|SHIFT,    // _ (on US - key, shifted)
-  0x35,          // ` (on US ` key)
+  0x2f|ALT_GR, // [ Square bracket (AltGr-[ on Hebrew keyboard)
+  0x35|ALT_GR, // \\ Backslash (AltGr-\ on Hebrew keyboard)
+  0x30|ALT_GR, // ] Square bracket (AltGr-] on Hebrew keyboard)
+  0x00,        // ^ Caret (not directly supported - requires dead key)
+  0x38|SHIFT,  // _ Underscore (Shift-- on Hebrew keyboard)
+  0x00,        // ` Backtick (not directly supported - requires dead key)
 
   // 0x61 - 0x7A: a-z (Latin lowercase letters)
+  // This maps the ASCII character 'a' to the scan code for the physical 'a' key, etc.
+  // When the host OS has a Hebrew keyboard layout active, it interprets these
+  // keypresses according to the SI-1452 standard.
+  // For example, the 'a' key (0x04) produces 'ש' (shin).
   0x04, // a
   0x05, // b
   0x06, // c
@@ -138,10 +142,10 @@ extern const uint8_t KeyboardLayout_he_HE[128] PROGMEM = {
   0x1d, // z
 
   // 0x7B - 0x7E: {|}~
-  0x2f|SHIFT,    // { (on US [ key, shifted)
-  0x31|SHIFT,    // | (on US \ key, shifted)
-  0x30|SHIFT,    // } (on US ] key, shifted)
-  0x35|SHIFT,    // ~ (on US ` key, shifted)
+  0x34|ALT_GR, // { Open brace (AltGr-{ on Hebrew keyboard)
+  0x1e|ALT_GR, // | Pipe (AltGr-| on Hebrew keyboard)
+  0x31|ALT_GR, // } Close brace (AltGr-} on Hebrew keyboard)
+  0x00,        // ~ Tilde (not directly supported - requires dead key)
 
   // 0x7F: DEL
   0x00
