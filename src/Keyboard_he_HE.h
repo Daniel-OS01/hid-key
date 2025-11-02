@@ -1,64 +1,60 @@
 /*
-  Keyboard_he_HE.h
-  Constants for the Hebrew keyboard layout.
-*/
+ * Keyboard_he_HE.h
+ *
+ * Hebrew keyboard layout declaration for Arduino Keyboard library
+ * Based on SI-1452 standard (Israeli Hebrew keyboard)
+ *
+ * Usage:
+ *   #include <Keyboard.h>
+ *   #include <Keyboard_he_HE.h>
+ *
+ *   void setup() {
+ *     Keyboard.begin(KeyboardLayout_he_HE);
+ *   }
+ *
+ * IMPORTANT - Library Limitations:
+ *
+ * This library uses ASCII-based character mapping (0-127 range).
+ * Hebrew Unicode characters are in range U+0590-U+05FF (far outside ASCII).
+ *
+ * Therefore:
+ * - Punctuation and symbols will use Hebrew keyboard positions ✓
+ * - Latin letters (a-z, A-Z) will work normally ✓
+ * - Direct Hebrew character input is NOT supported ✗
+ *
+ * For Hebrew letter input:
+ * 1. Enable Hebrew keyboard layout on your operating system
+ * 2. The Latin letter keys (a-z) will produce Hebrew letters
+ *    when the host OS has Hebrew layout active
+ * 3. Use Keyboard.write() with Latin characters that correspond
+ *    to desired Hebrew letters
+ *
+ * Example:
+ *   Keyboard.write('a');  // Produces 'alef' (א) on Hebrew layout
+ *   Keyboard.write('b');  // Produces 'bet' (ב) on Hebrew layout
+ *
+ * For More Information:
+ * - SI-1452 Israeli Keyboard Standard
+ * - Hebrew Unicode Block: U+0590-U+05FF
+ * - Unicode 15.0 Hebrew documentation
+ */
 
-#ifndef KEYBOARD_HE_HE_h
-#define KEYBOARD_HE_HE_h
+#ifndef KEYBOARD_HE_HE_H
+#define KEYBOARD_HE_HE_H
 
-#include "HID.h"
+#include <stdint.h>
 
-#if !defined(_USING_HID)
+/*
+ * Hebrew (Israel / he_HE) keyboard layout
+ *
+ * Provides access to the KeyboardLayout_he_HE array which maps
+ * ASCII characters to USB HID scan codes for the Israeli Hebrew keyboard.
+ *
+ * The layout follows the SI-1452 standard and includes support for
+ * punctuation, numbers, and Latin letters. When used with a Hebrew-enabled
+ * keyboard layout on the host computer, Latin letters will produce their
+ * corresponding Hebrew letters.
+ */
+extern const uint8_t KeyboardLayout_he_HE[];
 
-#warning "Using legacy HID core (non pluggable)"
-
-#else
-
-//================================================================================
-//================================================================================
-//  Keyboard
-
-// he_HE keys
-// Based on physical scan codes from KeyboardLayout.h
-// Base offset 136
-
-// Top (QWERTY) Row
-#define KEY_HE_SLASH        (136+0x14)  // Q
-#define KEY_HE_APOSTROPHE   (136+0x1A)  // W (גרש)
-#define KEY_HE_QOF          (136+0x08)  // E (ק)
-#define KEY_HE_RESH         (136+0x15)  // R (ר)
-#define KEY_HE_ALEF         (136+0x17)  // T (א)
-#define KEY_HE_TET          (136+0x1C)  // Y (ט)
-#define KEY_HE_VAV          (136+0x18)  // U (ו)
-#define KEY_HE_FINAL_NUN    (136+0x0C)  // I (ן)
-#define KEY_HE_FINAL_MEM    (136+0x12)  // O (ם)
-#define KEY_HE_PE           (136+0x13)  // P (פ)
-
-// Middle (ASDF) Row
-#define KEY_HE_SHIN         (136+0x04)  // A (ש)
-#define KEY_HE_DALET        (136+0x16)  // S (ד)
-#define KEY_HE_GIMEL        (136+0x07)  // D (ג)
-#define KEY_HE_KAF          (136+0x09)  // F (כ)
-#define KEY_HE_AYIN         (136+0x0A)  // G (ע)
-#define KEY_HE_YOD          (136+0x0B)  // H (י)
-#define KEY_HE_HET          (136+0x0D)  // J (ח)
-#define KEY_HE_LAMED        (136+0x0E)  // K (ל)
-#define KEY_HE_FINAL_KAF    (136+0x0F)  // L (ך)
-#define KEY_HE_FINAL_PE     (136+0x33)  // ; (ף)
-#define KEY_HE_COMMA_HEBREW (136+0x34)  // ' (פסיק)
-
-// Bottom (ZXCV) Row
-#define KEY_HE_ZAYIN        (136+0x1D)  // Z (ז)
-#define KEY_HE_SAMEKH       (136+0x1B)  // X (ס)
-#define KEY_HE_BET          (136+0x06)  // C (ב)
-#define KEY_HE_HE           (136+0x19)  // V (ה)
-#define KEY_HE_NUN          (136+0x05)  // B (נ)
-#define KEY_HE_MEM          (136+0x11)  // N (מ)
-#define KEY_HE_TSADI        (136+0x10)  // M (צ)
-#define KEY_HE_TAV          (136+0x36)  // , (ת)
-#define KEY_HE_FINAL_TSADI  (136+0x37)  // . (ץ)
-#define KEY_HE_PERIOD       (136+0x38)  // / (נקודה)
-
-
-#endif
-#endif
+#endif // KEYBOARD_HE_HE_H
