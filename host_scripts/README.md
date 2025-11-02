@@ -12,8 +12,12 @@ The easiest way to use this tool is with the graphical user interface.
 
 **Requirements:**
 - Python 3
-- `pyserial` library: `pip install pyserial`
-- `pyperclip` library: `pip install pyperclip`
+- See `requirements.txt` for dependencies.
+
+**Setup:**
+```bash
+pip install -r requirements.txt
+```
 
 **To Run:**
 ```bash
