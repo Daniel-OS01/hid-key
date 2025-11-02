@@ -5,6 +5,7 @@ import serial.tools.list_ports
 import pyperclip
 import time
 import threading
+import queue
 
 # This is the fully corrected Hebrew to US QWERTY keyboard mapping.
 # All previously identified bugs have been fixed.
@@ -19,7 +20,7 @@ HEBREW_QWERTY_MAP = {
     '^': '6', '&': '7', '*': '8', '(': '9', ')': '0', '_': '-',
     '+': '=',
     # Punctuation
-    ',': '.', '/': 'q', '.': '/', "'": "'", ';': 'w', '\\': '\\',
+    ',': ',', '.': '.', '/': 'q', "'": "'", ';': 'w', '\\': '\\',
     '[': ']', ']': '[',
 }
 
@@ -32,10 +33,12 @@ class App(tk.Tk):
         self.sending_thread = None
         self.sending = False
         self.ser = None
+        self.queue = queue.Queue()
 
         self.create_widgets()
         self.update_ports()
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.process_queue()
 
     def create_widgets(self):
         main_frame = ttk.Frame(self, padding="10")
@@ -71,6 +74,23 @@ class App(tk.Tk):
         self.log_area.pack(fill=tk.BOTH, expand=True)
         self.status_var = tk.StringVar(value="Ready")
         ttk.Label(main_frame, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W).pack(fill=tk.X)
+
+    def process_queue(self):
+        try:
+            while True:
+                msg = self.queue.get_nowait()
+                msg_type, payload = msg
+                if msg_type == 'log':
+                    self.log(payload)
+                elif msg_type == 'status':
+                    self.status_var.set(payload)
+                elif msg_type == 'worker_finished':
+                    self.sending = False
+                    self.send_button.config(text="Send Text", command=self.start_sending)
+        except queue.Empty:
+            pass
+        finally:
+            self.after(100, self.process_queue)
 
     def log(self, message):
         self.log_area.config(state='normal')
@@ -143,16 +163,13 @@ class App(tk.Tk):
             delay_ms = int(self.delay_var.get())
             delay_s = delay_ms / 1000.0
         except ValueError:
-            self.log("Error: Invalid baud rate or delay. Please enter numbers.")
-            self.sending = False
-            self.send_button.config(text="Send Text", command=self.start_sending)
+            self.queue.put(('log', "Error: Invalid baud rate or delay. Please enter numbers."))
+            self.queue.put(('worker_finished', None))
             return
 
         try:
-            # This is the critical fix: set dtr=False to prevent Arduino auto-reset
             self.ser = serial.Serial(port=port, baudrate=baudrate, timeout=1, dtr=False)
-
-            self.log(f"Connected to {port} at {baudrate} baud.")
+            self.queue.put(('log', f"Connected to {port} at {baudrate} baud."))
             for char in text:
                 if not self.sending:
                     break
@@ -160,36 +177,35 @@ class App(tk.Tk):
                 if char in HEBREW_QWERTY_MAP:
                     qwerty_char = HEBREW_QWERTY_MAP[char]
                     self.ser.write(qwerty_char.encode('ascii'))
-                    self.log(f"Sent '{qwerty_char}' for Hebrew '{char}'")
+                    self.queue.put(('log', f"Sent '{qwerty_char}' for Hebrew '{char}'"))
                 elif ' ' <= char <= '~':
                     self.ser.write(char.encode('ascii'))
-                    self.log(f"Sent ASCII '{char}'")
+                    self.queue.put(('log', f"Sent ASCII '{char}'"))
                 elif char == '\n':
                     self.ser.write(b'\r')
-                    self.log("Sent newline (CR)")
+                    self.queue.put(('log', "Sent newline (CR)"))
                 else:
-                    self.log(f"Skipping unsupported char: '{char}'")
+                    self.queue.put(('log', f"Skipping unsupported char: '{char}'"))
 
                 time.sleep(delay_s)
 
             if self.sending:
-                self.log("Finished sending text.")
-                self.status_var.set("Done")
+                self.queue.put(('log', "Finished sending text."))
+                self.queue.put(('status', "Done"))
             else:
-                self.status_var.set("Stopped")
+                self.queue.put(('status', "Stopped"))
 
         except serial.SerialException as e:
-            self.log(f"Serial Error: {e}")
-            self.status_var.set("Error: Serial connection failed")
+            self.queue.put(('log', f"Serial Error: {e}"))
+            self.queue.put(('status', "Error: Serial connection failed"))
         except Exception as e:
-            self.log(f"An unexpected error occurred: {e}")
-            self.status_var.set("Error")
+            self.queue.put(('log', f"An unexpected error occurred: {e}"))
+            self.queue.put(('status', "Error"))
         finally:
             if self.ser and self.ser.is_open:
                 self.ser.close()
-                self.log("Serial port closed.")
-            self.sending = False
-            self.send_button.config(text="Send Text", command=self.start_sending)
+                self.queue.put(('log', "Serial port closed."))
+            self.queue.put(('worker_finished', None))
 
 if __name__ == "__main__":
     app = App()
