@@ -4,7 +4,6 @@ import time
 import argparse
 
 # This mapping is based on the standard Hebrew keyboard layout (SI-1452)
-# The key is the Hebrew character, and the value is the corresponding US QWERTY key.
 HEBREW_QWERTY_MAP = {
     'א': 't', 'ב': 'c', 'ג': 'd', 'ד': 's', 'ה': 'v', 'ו': 'u',
     'ז': 'z', 'ח': 'j', 'ט': 'y', 'י': 'h', 'כ': 'f', 'ל': 'k',
@@ -21,46 +20,46 @@ HEBREW_QWERTY_MAP = {
 }
 
 def send_text_to_arduino(text, port, baudrate=9600, delay=0.01):
-    """
-    Sends the given text to the Arduino over the specified serial port.
-
-    Args:
-        text (str): The text to send.
-        port (str): The serial port to connect to (e.g., 'COM3' or '/dev/ttyACM0').
-        baudrate (int): The baud rate of the serial connection.
-        delay (float): The delay between sending each character, in seconds.
-    """
+    ser = None  # Initialize ser to None
     try:
-        with serial.Serial(port, baudrate, timeout=1) as ser:
-            # Wait for the Arduino to reset after establishing the serial connection.
-            # This is crucial for boards like the Pro Micro that have native USB.
-            time.sleep(2)
+        # Open the serial port without a 'with' statement to manage DTR
+        ser = serial.Serial()
+        ser.port = port
+        ser.baudrate = baudrate
+        ser.timeout = 1
+        # Disable DTR to prevent the Arduino Pro Micro from resetting
+        ser.dtr = False
+        ser.open()
 
-            print(f"Connected to {port} at {baudrate} baud.")
-            print("Sending text from clipboard...")
+        print(f"Connected to {port} at {baudrate} baud.")
+        print("Sending text from clipboard...")
 
-            for char in text:
-                if char in HEBREW_QWERTY_MAP:
-                    qwerty_char = HEBREW_QWERTY_MAP[char]
-                    ser.write(qwerty_char.encode('ascii'))
-                    print(f"Sent '{qwerty_char}' for Hebrew char '{char}'")
-                elif ' ' <= char <= '~':  # Regular ASCII characters
-                    ser.write(char.encode('ascii'))
-                    print(f"Sent ASCII char '{char}'")
-                elif char == '\n':
-                    ser.write(b'\r') # Send carriage return for newline
-                    print("Sent newline")
-                else:
-                    print(f"Skipping unsupported character: '{char}'")
+        for char in text:
+            if char in HEBREW_QWERTY_MAP:
+                qwerty_char = HEBREW_QWERTY_MAP[char]
+                ser.write(qwerty_char.encode('ascii'))
+                print(f"Sent '{qwerty_char}' for Hebrew char '{char}'")
+            elif ' ' <= char <= '~':  # Regular ASCII characters
+                ser.write(char.encode('ascii'))
+                print(f"Sent ASCII char '{char}'")
+            elif char == '\n':
+                ser.write(b'\r') # Send carriage return for newline
+                print("Sent newline")
+            else:
+                print(f"Skipping unsupported character: '{char}'")
 
-                time.sleep(delay)
+            time.sleep(delay)
 
-            print("Done.")
+        print("Done.")
     except serial.SerialException as e:
         print(f"Error: Could not open serial port {port}. Please check the port and permissions.")
         print(e)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+    finally:
+        if ser and ser.is_open:
+            ser.close()
+            print("Serial port closed.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Send Hebrew text from the clipboard to an Arduino Keyboard.")
@@ -70,7 +69,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Get text from the clipboard
     clipboard_text = pyperclip.paste()
 
     if not clipboard_text:
