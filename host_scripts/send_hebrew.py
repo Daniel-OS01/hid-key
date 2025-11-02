@@ -10,13 +10,13 @@ HEBREW_QWERTY_MAP = {
     'ז': 'z', 'ח': 'j', 'ט': 'y', 'י': 'h', 'כ': 'f', 'ל': 'k',
     'מ': 'n', 'נ': 'b', 'ס': 'x', 'ע': 'g', 'פ': 'p', 'צ': 'm',
     'ק': 'e', 'ר': 'r', 'ש': 'a', 'ת': ',', 'ך': 'l', 'ם': 'o',
-    'ן': 'i', 'ף': 'q', 'ץ': ',',
+    'ן': 'i', 'ף': ';', 'ץ': ',',
     # Shifted characters
     '~': '`', '!': '1', '@': '2', '#': '3', '$': '4', '%': '5',
     '^': '6', '&': '7', '*': '8', '(': '9', ')': '0', '_': '-',
     '+': '=',
     # Punctuation
-    ',': '.', '/': ';', '.': '/', "'": "'", ';': 'w', '\\': '\\',
+    ',': '.', '/': 'q', '.': '/', "'": "'", ';': 'w', '\\': '\\',
     '[': ']', ']': '[',
 }
 
@@ -32,6 +32,10 @@ def send_text_to_arduino(text, port, baudrate=9600, delay=0.01):
     """
     try:
         with serial.Serial(port, baudrate, timeout=1) as ser:
+            # Wait for the Arduino to reset after establishing the serial connection.
+            # This is crucial for boards like the Pro Micro that have native USB.
+            time.sleep(2)
+
             print(f"Connected to {port} at {baudrate} baud.")
             print("Sending text from clipboard...")
 
