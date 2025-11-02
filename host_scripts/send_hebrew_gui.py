@@ -6,7 +6,7 @@ import pyperclip
 import time
 import threading
 
-# Hebrew to US QWERTY keyboard mapping (from send_hebrew.py)
+# Hebrew to US QWERTY keyboard mapping
 HEBREW_QWERTY_MAP = {
     'א': 't', 'ב': 'c', 'ג': 'd', 'ד': 's', 'ה': 'v', 'ו': 'u',
     'ז': 'z', 'ח': 'j', 'ט': 'y', 'י': 'h', 'כ': 'f', 'ל': 'k',
@@ -27,61 +27,45 @@ class App(tk.Tk):
 
         self.sending_thread = None
         self.sending = False
+        self.ser = None # To hold the serial object
 
         self.create_widgets()
         self.update_ports()
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def create_widgets(self):
+        # (GUI widget creation code remains the same as before)
         main_frame = ttk.Frame(self, padding="10")
         main_frame.pack(fill=tk.BOTH, expand=True)
-
-        # --- Text Input Area ---
         ttk.Label(main_frame, text="Enter or Paste Hebrew Text Here:").pack(anchor=tk.W)
         self.text_area = scrolledtext.ScrolledText(main_frame, height=10, width=70, wrap=tk.WORD)
         self.text_area.pack(fill=tk.BOTH, expand=True)
-
-        # --- Controls Frame ---
         controls_frame = ttk.LabelFrame(main_frame, text="Controls", padding="10")
         controls_frame.pack(fill=tk.X, pady=10)
-
-        # Serial Port
         ttk.Label(controls_frame, text="Serial Port:").grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
         self.port_var = tk.StringVar()
         self.port_menu = ttk.Combobox(controls_frame, textvariable=self.port_var, width=20)
         self.port_menu.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
         self.refresh_button = ttk.Button(controls_frame, text="Refresh", command=self.update_ports)
         self.refresh_button.grid(row=0, column=2, padx=5, pady=5)
-
-        # Baud Rate
         ttk.Label(controls_frame, text="Baud Rate:").grid(row=1, column=0, padx=5, pady=5, sticky=tk.W)
         self.baud_var = tk.StringVar(value="9600")
         ttk.Entry(controls_frame, textvariable=self.baud_var, width=10).grid(row=1, column=1, padx=5, pady=5, sticky=tk.W)
-
-        # Delay
         ttk.Label(controls_frame, text="Delay (ms):").grid(row=1, column=2, padx=5, pady=5, sticky=tk.W)
         self.delay_var = tk.StringVar(value="20")
         ttk.Entry(controls_frame, textvariable=self.delay_var, width=10).grid(row=1, column=3, padx=5, pady=5, sticky=tk.W)
-
-        # --- Action Buttons ---
         buttons_frame = ttk.Frame(main_frame)
         buttons_frame.pack(fill=tk.X, pady=5)
-
         self.send_button = ttk.Button(buttons_frame, text="Send Text", command=self.start_sending)
         self.send_button.pack(side=tk.LEFT, padx=5)
-
         self.paste_button = ttk.Button(buttons_frame, text="Paste from Clipboard", command=self.paste_from_clipboard)
         self.paste_button.pack(side=tk.LEFT, padx=5)
-
         self.clear_button = ttk.Button(buttons_frame, text="Clear Text", command=self.clear_text)
         self.clear_button.pack(side=tk.LEFT, padx=5)
-
-        # --- Log Area ---
         log_frame = ttk.LabelFrame(main_frame, text="Log", padding="10")
         log_frame.pack(fill=tk.BOTH, expand=True, pady=10)
         self.log_area = scrolledtext.ScrolledText(log_frame, height=10, width=70, state='disabled', wrap=tk.WORD)
         self.log_area.pack(fill=tk.BOTH, expand=True)
-
-        # --- Status Bar ---
         self.status_var = tk.StringVar(value="Ready")
         ttk.Label(main_frame, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W).pack(fill=tk.X)
 
@@ -141,48 +125,60 @@ class App(tk.Tk):
     def stop_sending(self):
         self.sending = False # Signal the worker thread to stop
         self.log("Sending stopped by user.")
-        self.status_var.set("Stopped")
-        self.send_button.config(text="Send Text", command=self.start_sending)
+
+    def on_closing(self):
+        if self.sending:
+            self.stop_sending() # Ensure thread is signaled to stop
+            if self.sending_thread:
+                self.sending_thread.join(timeout=1.0) # Wait for thread to finish
+        self.destroy()
 
     def send_text_worker(self, text, port):
+        self.ser = None
         try:
             baudrate = int(self.baud_var.get())
             delay_ms = int(self.delay_var.get())
             delay_s = delay_ms / 1000.0
         except ValueError:
             self.log("Error: Invalid baud rate or delay. Please enter numbers.")
-            self.stop_sending() # Reset button state
+            self.sending = False
+            self.send_button.config(text="Send Text", command=self.start_sending)
             return
 
         try:
-            with serial.Serial(port, baudrate, timeout=1) as ser:
-                # Wait for the Arduino to reset after establishing the serial connection.
-                # This is crucial for boards like the Pro Micro that have native USB.
-                time.sleep(2)
+            self.ser = serial.Serial()
+            self.ser.port = port
+            self.ser.baudrate = baudrate
+            self.ser.timeout = 1
+            # Disable DTR to prevent the Arduino Pro Micro from resetting
+            self.ser.dtr = False
+            self.ser.open()
 
-                self.log(f"Connected to {port} at {baudrate} baud.")
-                for char in text:
-                    if not self.sending:
-                        break
+            self.log(f"Connected to {port} at {baudrate} baud.")
+            for char in text:
+                if not self.sending:
+                    break
 
-                    if char in HEBREW_QWERTY_MAP:
-                        qwerty_char = HEBREW_QWERTY_MAP[char]
-                        ser.write(qwerty_char.encode('ascii'))
-                        self.log(f"Sent '{qwerty_char}' for Hebrew '{char}'")
-                    elif ' ' <= char <= '~':
-                        ser.write(char.encode('ascii'))
-                        self.log(f"Sent ASCII '{char}'")
-                    elif char == '\n':
-                        ser.write(b'\r')
-                        self.log("Sent newline (CR)")
-                    else:
-                        self.log(f"Skipping unsupported char: '{char}'")
+                if char in HEBREW_QWERTY_MAP:
+                    qwerty_char = HEBREW_QWERTY_MAP[char]
+                    self.ser.write(qwerty_char.encode('ascii'))
+                    self.log(f"Sent '{qwerty_char}' for Hebrew '{char}'")
+                elif ' ' <= char <= '~':
+                    self.ser.write(char.encode('ascii'))
+                    self.log(f"Sent ASCII '{char}'")
+                elif char == '\n':
+                    self.ser.write(b'\r')
+                    self.log("Sent newline (CR)")
+                else:
+                    self.log(f"Skipping unsupported char: '{char}'")
 
-                    time.sleep(delay_s)
+                time.sleep(delay_s)
 
-                if self.sending: # If it finished without being stopped
-                    self.log("Finished sending text.")
-                    self.status_var.set("Done")
+            if self.sending: # If it finished without being stopped
+                self.log("Finished sending text.")
+                self.status_var.set("Done")
+            else: # If it was stopped by the user
+                self.status_var.set("Stopped")
 
         except serial.SerialException as e:
             self.log(f"Serial Error: {e}")
@@ -191,9 +187,11 @@ class App(tk.Tk):
             self.log(f"An unexpected error occurred: {e}")
             self.status_var.set("Error")
         finally:
+            if self.ser and self.ser.is_open:
+                self.ser.close()
+                self.log("Serial port closed.")
             self.sending = False
             self.send_button.config(text="Send Text", command=self.start_sending)
-
 
 if __name__ == "__main__":
     app = App()
