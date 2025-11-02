@@ -87,6 +87,33 @@ When using the Mouse or Keyboard library, it may be best to test your output fir
 -   [Keyboard.releaseAll()](https://docs.arduino.cc/language-reference/en/functions/usb/Keyboard/keyboardReleaseAll)
 -   [Keyboard.write()](https://docs.arduino.cc/language-reference/en/functions/usb/Keyboard/keyboardWrite)
 
+## Supported Layouts
+
+This library includes support for multiple keyboard layouts. To use a specific layout, you must include the corresponding header file and pass the layout to `Keyboard.begin()`.
+
+For example, to use the German layout:
+
+```cpp
+#include <Keyboard.h>
+#include "Keyboard_de_DE.h"
+
+void setup() {
+  Keyboard.begin(KeyboardLayout_de_DE);
+}
+```
+
+The following layouts are included with this library:
+*   Danish (da_DK)
+*   German (de_DE)
+*   US English (en_US)
+*   Spanish (es_ES)
+*   French (fr_FR)
+*   Hebrew (he_HE)
+*   Hungarian (hu_HU)
+*   Italian (it_IT)
+*   Portuguese (pt_PT)
+*   Swedish (sv_SE)
+
 ## See also
 
 -   [KeyboardAndMouseControl](http://www.arduino.cc/en/Tutorial/KeyboardAndMouseControl): Demonstrates the Mouse and Keyboard commands in one program.
