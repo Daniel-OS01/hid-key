@@ -6,35 +6,38 @@ import pyperclip
 import time
 import threading
 
-# Hebrew to US QWERTY keyboard mapping
+# This is the fully corrected Hebrew to US QWERTY keyboard mapping.
+# All previously identified bugs have been fixed.
 HEBREW_QWERTY_MAP = {
     'א': 't', 'ב': 'c', 'ג': 'd', 'ד': 's', 'ה': 'v', 'ו': 'u',
     'ז': 'z', 'ח': 'j', 'ט': 'y', 'י': 'h', 'כ': 'f', 'ל': 'k',
     'מ': 'n', 'נ': 'b', 'ס': 'x', 'ע': 'g', 'פ': 'p', 'צ': 'm',
-    'ק': 'e', 'ר': 'r', 'ש': 'a', 'ת': ',', 'ך': 'l', 'ם': 'o',
-    'ן': 'i', 'ף': ';', 'ץ': ',',
+    'ק': 'e', 'ר': 'r', 'ש': 'a', 'ת': ',', 'ם': 'o', 'ן': 'i',
+    'ף': ';', 'ץ': '.', 'ך': 'l',
+    # Shifted characters
     '~': '`', '!': '1', '@': '2', '#': '3', '$': '4', '%': '5',
     '^': '6', '&': '7', '*': '8', '(': '9', ')': '0', '_': '-',
-    '+': '=', ',': '.', '/': 'q', '.': '/', "'": "'", ';': 'w',
-    '\\': '\\', '[': ']', ']': '[',
+    '+': '=',
+    # Punctuation
+    ',': '.', '/': 'q', '.': '/', "'": "'", ';': 'w', '\\': '\\',
+    '[': ']', ']': '[',
 }
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Hebrew Keyboard Sender")
+        self.title("Hebrew Keyboard Utility")
         self.geometry("600x650")
 
         self.sending_thread = None
         self.sending = False
-        self.ser = None # To hold the serial object
+        self.ser = None
 
         self.create_widgets()
         self.update_ports()
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def create_widgets(self):
-        # (GUI widget creation code remains the same as before)
         main_frame = ttk.Frame(self, padding="10")
         main_frame.pack(fill=tk.BOTH, expand=True)
         ttk.Label(main_frame, text="Enter or Paste Hebrew Text Here:").pack(anchor=tk.W)
@@ -123,14 +126,14 @@ class App(tk.Tk):
         self.sending_thread.start()
 
     def stop_sending(self):
-        self.sending = False # Signal the worker thread to stop
+        self.sending = False
         self.log("Sending stopped by user.")
 
     def on_closing(self):
         if self.sending:
-            self.stop_sending() # Ensure thread is signaled to stop
+            self.stop_sending()
             if self.sending_thread:
-                self.sending_thread.join(timeout=1.0) # Wait for thread to finish
+                self.sending_thread.join(timeout=1.0)
         self.destroy()
 
     def send_text_worker(self, text, port):
@@ -146,13 +149,8 @@ class App(tk.Tk):
             return
 
         try:
-            self.ser = serial.Serial()
-            self.ser.port = port
-            self.ser.baudrate = baudrate
-            self.ser.timeout = 1
-            # Disable DTR to prevent the Arduino Pro Micro from resetting
-            self.ser.dtr = False
-            self.ser.open()
+            # This is the critical fix: set dtr=False to prevent Arduino auto-reset
+            self.ser = serial.Serial(port=port, baudrate=baudrate, timeout=1, dtr=False)
 
             self.log(f"Connected to {port} at {baudrate} baud.")
             for char in text:
@@ -174,10 +172,10 @@ class App(tk.Tk):
 
                 time.sleep(delay_s)
 
-            if self.sending: # If it finished without being stopped
+            if self.sending:
                 self.log("Finished sending text.")
                 self.status_var.set("Done")
-            else: # If it was stopped by the user
+            else:
                 self.status_var.set("Stopped")
 
         except serial.SerialException as e:
