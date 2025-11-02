@@ -1,64 +1,80 @@
 # Host-Side Helper Scripts
 
-These scripts are designed to send Hebrew text from your computer's clipboard to an Arduino running a `SerialToKeyboard` sketch. They handle the translation from the Hebrew character set to the corresponding US QWERTY keystrokes that the Arduino expects. They also introduce a small delay between each character to prevent the Arduino's buffer from overflowing, which is a common issue when pasting large amounts of text.
+These scripts are designed to send Hebrew text from your computer to an Arduino running a `SerialToKeyboard` sketch. They handle the translation from the Hebrew character set to the corresponding US QWERTY keystrokes that the Arduino expects. They also introduce a small delay between each character to prevent the Arduino's buffer from overflowing, which is a common issue when pasting large amounts of text.
 
-## Requirements
+This directory contains both command-line and GUI versions of the scripts.
 
-### Python Script (`send_hebrew.py`)
+## GUI Applications
 
+The easiest way to use this tool is with the graphical user interface.
+
+### Python GUI (`send_hebrew_gui.py`)
+
+![Python GUI Screenshot](https://i.imgur.com/your-screenshot.png) <!-- It's helpful to add a screenshot -->
+
+**Requirements:**
 - Python 3
 - `pyserial` library: `pip install pyserial`
 - `pyperclip` library: `pip install pyperclip`
 
-### PowerShell Script (`send_hebrew.ps1`)
+**To Run:**
+```bash
+python send_hebrew_gui.py
+```
 
+### PowerShell GUI (`send_hebrew_gui.ps1`)
+
+![PowerShell GUI Screenshot](https://i.imgur.com/your-screenshot.png) <!-- It's helpful to add a screenshot -->
+
+**Requirements:**
 - PowerShell 5.1 or later (standard on Windows 10 and 11)
-- No special dependencies are required.
 
-## Usage
+**To Run:**
+Open a PowerShell terminal and run the script. You may need to change the execution policy:
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\send_hebrew_gui.ps1
+```
 
-1.  **Upload a `SerialToKeyboard` Sketch to Your Arduino:**
-    Make sure your Arduino (e.g., a Pro Micro) is programmed with one of the `ProMicro_SerialToKeyboard` examples from this repository. The `_Slow` or `_Adaptive` versions are recommended for pasted text.
+### GUI Features
+- **Text Area:** A large box to type or paste the Hebrew text you want to send.
+- **Serial Port Dropdown:** Automatically detects and lists available serial ports. Use the **Refresh** button if you plug in your Arduino after opening the app.
+- **Baud Rate & Delay:** Set the communication speed and the delay (in milliseconds) between each character. A delay of 10-20ms is recommended for pasting.
+- **Send/Stop Button:** Starts or stops the sending process. The button text changes to "Stop Sending" while active.
+- **Paste from Clipboard:** A convenient button to paste text directly into the text area.
+- **Clear Text:** Clears the text area.
+- **Log Window:** Shows a real-time log of the application's activity, including connection status, which characters are being sent, and any errors. This is very useful for troubleshooting.
+- **Status Bar:** Displays the current status (e.g., "Ready", "Sending...", "Error").
 
-2.  **Find Your Arduino's Serial Port:**
-    -   **Windows:** Open the Device Manager, look under "Ports (COM & LPT)". Your Arduino will likely appear as "Arduino Leonardo" or a similar name, followed by a COM port (e.g., `COM3`).
-    -   **Linux:** Open a terminal and run `dmesg | grep tty`. Your Arduino will likely be listed as `/dev/ttyACM0` or similar.
-    -   **macOS:** Open a terminal and run `ls /dev/cu.usbmodem*`.
+---
 
-3.  **Copy Hebrew Text:**
-    Copy the Hebrew text you want to type to your clipboard.
+## Command-Line Scripts
 
-4.  **Run the Script:**
+For users who prefer the command line.
 
-    ### Python
+### `send_hebrew.py` (Python)
+
+**Usage:**
+1.  **Find Your Arduino's Serial Port:**
+    -   **Windows:** `COM3`, `COM4`, etc. (Check Device Manager)
+    -   **Linux/macOS:** `/dev/ttyACM0`, `/dev/cu.usbmodem...`, etc.
+2.  **Copy Hebrew Text:** Copy the text you want to type to your clipboard.
+3.  **Run the Script:**
     ```bash
     python send_hebrew.py <YOUR_SERIAL_PORT>
     ```
     Example:
     ```bash
-    python send_hebrew.py COM3
-    ```
-    You can also adjust the delay between characters:
-    ```bash
     python send_hebrew.py COM3 --delay 0.03
     ```
 
-    ### PowerShell
-    Open a PowerShell terminal. You may need to change the execution policy to run the script:
-    ```powershell
-    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-    ```
-    Then run the script:
-    ```powershell
-    .\send_hebrew.ps1 -Port <YOUR_SERIAL_PORT>
-    ```
-    Example:
-    ```powershell
-    .\send_hebrew.ps1 -Port COM3
-    ```
-    You can also adjust the delay:
-    ```powershell
-    .\send_hebrew.ps1 -Port COM3 -Delay 30
-    ```
+### `send_hebrew.ps1` (PowerShell)
 
-The script will then connect to the Arduino and begin typing the text from your clipboard.
+**Usage:**
+```powershell
+.\send_hebrew.ps1 -Port <YOUR_SERIAL_PORT>
+```
+Example:
+```powershell
+.\send_hebrew.ps1 -Port COM3 -Delay 30
+```
